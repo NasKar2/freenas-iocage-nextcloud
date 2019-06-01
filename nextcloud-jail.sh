@@ -311,11 +311,17 @@ echo
 echo
 echo
 # copy backup and restore script and email settings script
-cp -f /git/freenas-iocage-nextcloud/NextcloudBR.sh /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/NextcloudBR.sh
-cp -f /git/freenas-iocage-nextcloud/NextcloudBR-config /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/NextcloudBR-config
-chmod 600 /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/NextcloudBR-config
+iocage exec ${JAIL_NAME} cp -f /mnt/configs/NextcloudBR.sh /usr/NextcloudBR.sh
+iocage exec ${JAIL_NAME} cp -f /mnt/configs/NextcloudBR-config /usr/NextcloudBR-config
+iocage exec ${JAIL_NAME} cp -f /mnt/configs/nginx.basic.conf /usr/local/etc/nginx/nginx.conf
+iocage exec ${JAIL_NAME} chmod 600 /usr/NextcloudBR-config
 iocage exec ${JAIL_NAME} sed -i '' "s|mydbpassword|${DB_PASSWORD}|" /usr/NextcloudBR-config
-cp -f /git/freenas-iocage-nextcloud/email.sh /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/email.sh
+
+#cp -f /git/freenas-iocage-nextcloud/NextcloudBR.sh /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/NextcloudBR.sh
+#cp -f /git/freenas-iocage-nextcloud/NextcloudBR-config /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/NextcloudBR-config
+#chmod 600 /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/NextcloudBR-config
+#iocage exec ${JAIL_NAME} sed -i '' "s|mydbpassword|${DB_PASSWORD}|" /usr/NextcloudBR-config
+#cp -f /git/freenas-iocage-nextcloud/email.sh /mnt/v1/iocage/jails/${JAIL_NAME}/root/usr/email.sh
 echo "Backup and Restore scripts copied to /usr directory in the jail ${JAIL_NAME}"
 
 # Don't need /mnt/configs any more, so unmount it
