@@ -63,7 +63,9 @@ This script has been tested on my system, in Standalone mode only, and everythin
 I'd also appreciate any suggestions (or pull requests) to improve the various config files I'm using.  Most of them are adapted from the default configuration files that ship with the software in question, and have only been lightly edited to work in this application.  But if there are changes to settings or organization that could improve performance or reliability, I'd like to hear about them.
 
 ### Backup and Restore
-NextcloudBR.sh and NextcloudBR-config are automatically copied to the jails /usr directory. At the end of the restore the script will reset the admin password and  ask for a new one.  If you previously had 2 factor authentication turned on it will be removed.  After complete you can re enable it with the GUI if you want. 
+NextcloudBR.sh and NextcloudBR-config are automatically copied to the jails /usr directory. At the end of the restore the script will reset the admin password and  ask for a new one.  If you previously had 2 factor authentication 
+turned on it will be removed.  After complete you can re enable it with the GUI if you want. You can automate backup up by setting the cron variable to "yes" in the NextcloudBR-config.  It will then automatically backup and not give 
+you the option to restore.
 
 run the backup and restore script from the iocage jail for nextcloud
 
