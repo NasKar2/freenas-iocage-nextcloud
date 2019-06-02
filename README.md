@@ -76,5 +76,8 @@ from inside the jail
 ```
 /usr/NextcloudBR.sh
 ```
+### Email Setting Restore
+email.sh script can restore your email settings
+You must edit the script in the configs/ directory with your email settings and then run it from within the nextcloud jail.
 ### To Do
-Change from 14.04 to latest 15 after checking that backup and restore work with new version
+Check that backup and restore work with new version
