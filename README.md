@@ -81,5 +81,10 @@ from inside the jail
 ### Email Setting Restore
 email.sh script can restore your email settings
 You must edit the script in the configs/ directory with your email settings and then run it from within the nextcloud jail.
+### Automatic Renewal of Letsencrypt
+Run a cronjob with 
+```
+iocage exec nextcloud certbot renew --quiet --renew-hook "service nginx reload"
+```
 ### To Do
-Check that backup and restore work with new version
+
