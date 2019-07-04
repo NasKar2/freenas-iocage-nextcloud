@@ -57,10 +57,10 @@ Set NO_SSL="yes" if you don't want to install with ssl
 ### Execution
 Once you've downloaded the script, prepared the configuration file, run this script (`./nextcloud-jail.sh`).  The script will run for several minutes.  When it finishes, your jail will be created, Nextcloud will be installed and configured, and you'll be shown the randomly-generated password for the default user ("admin").  You can then log in and create users, add data, and generally do whatever else you like. Redis command is entered last. I don't know why but it gives errors if placed after APCU command.
 
-### To Do
-This script has been tested on my system, in Standalone mode only, and everything seems to be working properly.  Further testing is, of course, always appreciated.
+### Feedback
+This script has been tested on my system and everything seems to be working properly.  Further testing is, of course, always appreciated.
 
-I'd also appreciate any suggestions (or pull requests) to improve the various config files I'm using.  Most of them are adapted from the default configuration files that ship with the software in question, and have only been lightly edited to work in this application.  But if there are changes to settings or organization that could improve performance or reliability, I'd like to hear about them.
+I'd also appreciate any suggestions (or pull requests) to improve the script.
 
 ### Backup and Restore
 NextcloudBR.sh and NextcloudBR-config are automatically copied to the jails /usr directory. At the end of the restore the script will reset the admin password and  ask for a new one.  If you previously had 2 factor authentication 
@@ -96,4 +96,4 @@ paste these lines into file and ESC :wq to save
 ```
 
 ### To Do
-
+See if renewal works automatically
