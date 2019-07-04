@@ -86,5 +86,14 @@ Run a cronjob with
 ```
 iocage exec nextcloud certbot renew --quiet --renew-hook "service nginx reload"
 ```
+or inside the jail
+```
+crontab -e
+```
+paste these lines into file and ESC :wq to save
+```45 3 * * * /usr/NextcloudBR.sh
+7 5 * * * certbot renew --quiet --renew-hook "service nginx reload"
+```
+
 ### To Do
 
