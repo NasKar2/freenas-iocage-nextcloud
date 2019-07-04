@@ -78,6 +78,10 @@ from inside the jail
 ```
 /usr/NextcloudBR.sh
 ```
+To run the backup automatically add to a crontab -e after setting the cron variable to "yes" in NextcloudBR-config
+```
+45 3 * * * /usr/NextcloudBR.sh
+```
 ### Email Setting Restore
 email.sh script can restore your email settings
 You must edit the script in the configs/ directory with your email settings and then run it from within the nextcloud jail.
@@ -90,8 +94,8 @@ or inside the jail
 ```
 crontab -e
 ```
-paste these lines into file and ESC :wq to save
-```45 3 * * * /usr/NextcloudBR.sh
+paste these lines into file and `ESC :wq` to save
+```
 7 5 * * * certbot renew --quiet --renew-hook "service nginx reload"
 ```
 
