@@ -163,6 +163,16 @@ mkdir -p ${PORTS_PATH}/ports
 mkdir -p ${PORTS_PATH}/db
 mkdir -p ${POOL_PATH}/media
 mkdir -p ${POOL_PATH}/NextcloudBackups
+
+iocage exec "${JAIL_NAME}" mkdir -p /mnt/configs
+iocage exec "${JAIL_NAME}" mkdir -p /usr/local/www
+#mkdir -p /mnt/iocage/jails/${JAIL_NAME}/root/var/db/portsnap
+#mkdir -p /mnt/iocage/jails/${JAIL_NAME}/root/mnt/files
+#mkdir -p /mnt/iocage/jails/${JAIL_NAME}/root/mnt/configs
+iocage exec "${JAIL_NAME}" mkdir -p /usr/ports
+iocage exec "${JAIL_NAME}" mkdir -p /mnt/NextcloudBackups
+iocage exec "${JAIL_NAME}" mkdir -p /mnt/media
+
 iocage exec ${JAIL_NAME} mkdir -p /mnt/files
 iocage exec ${JAIL_NAME} mkdir -p /var/db/mysql
 iocage exec ${JAIL_NAME} mkdir -p /mnt/configs
