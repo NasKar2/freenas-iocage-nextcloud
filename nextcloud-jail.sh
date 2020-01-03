@@ -350,4 +350,5 @@ echo "Database password = ${DB_PASSWORD}"
 echo "The MariaDB root password is ${DB_ROOT_PASSWORD}"
 echo ""
 echo "All passwords are saved in /root/${JAIL_NAME}_db_password.txt"
-
+echo "To fix the 'Some columns in the database are missing a conversion to big int' issue this command"
+ehco "iocage exec ${JAIL_NAME} sudo -u www php /usr/local/www/nextcloud/occ db:convert-filecache-bigint"
