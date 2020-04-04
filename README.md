@@ -65,7 +65,7 @@ I'd also appreciate any suggestions (or pull requests) to improve the script.
 ### Backup and Restore
 NextcloudBR.sh and NextcloudBR-config are automatically copied to the jails /usr directory. At the end of the restore the script will reset the admin password and  ask for a new one.  If you previously had 2 factor authentication 
 turned on it will be removed.  After complete you can re enable it with the GUI if you want. You can automate backup up by setting the cron variable to "yes" in the NextcloudBR-config.  It will then automatically backup and not give 
-you the option to restore.
+you the option to restore. The version of nextcloud must be the same as the version of the backup or it will break the install. 
 
 run the backup and restore script from the iocage jail for nextcloud
 

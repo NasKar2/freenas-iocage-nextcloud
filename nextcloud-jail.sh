@@ -39,8 +39,8 @@ CONFIGS_PATH=$SCRIPTPATH/configs
 DB_ROOT_PASSWORD=$(openssl rand -base64 16)
 DB_PASSWORD=$(openssl rand -base64 16)
 ADMIN_PASSWORD=$(openssl rand -base64 12)
-RELEASE=$(freebsd-version | sed "s/STABLE/RELEASE/g")
-
+#RELEASE=$(freebsd-version | sed "s/STABLE/RELEASE/g")
+RELEASE="11.3-RELEASE"
 # Check for nextcloud-config and set configuration
 if ! [ -e $SCRIPTPATH/nextcloud-config ]; then
   echo "$SCRIPTPATH/nextcloud-config must exist."
@@ -85,10 +85,10 @@ fi
 
 # If DB_PATH, FILES_PATH, and PORTS_PATH weren't set in nextcloud-config, set them
 if [ -z $DB_PATH ]; then
-  DB_PATH="${POOL_PATH}/db"
+  DB_PATH="${POOL_PATH}/nextcloud/db"
 fi
 if [ -z $FILES_PATH ]; then
-  FILES_PATH="${POOL_PATH}/files"
+  FILES_PATH="${POOL_PATH}/nextcloud/files"
 fi
 if [ -z $PORTS_PATH ]; then
   PORTS_PATH="${POOL_PATH}/portsnap"
@@ -150,7 +150,7 @@ if [ -z $NO_SSL ]; then
 NO_SSL="no"
 fi 
 
-echo '{"pkgs":["nano","rsync","openssl","curl","sudo","php72-phar","py27-certbot","nginx","mariadb102-server","redis","php72-ctype","php72-dom","php72-gd","php72-iconv","php72-json","php72-mbstring","php72-posix","php72-simplexml","php72-xmlreader","php72-xmlwriter","php72-zip","php72-zlib","php72-pdo_mysql","php72-hash","php72-xml","php72-session","php72-mysqli","php72-wddx","php72-xsl","php72-filter","php72-curl","php72-fileinfo","php72-bz2","php72-intl","php72-openssl","php72-ldap","php72-ftp","php72-imap","php72-exif","php72-gmp","php72-memcache","php72-opcache","php72-pcntl","php72","mod_php72","php72-pecl-APCu","php72-pecl-imagick","bash","p5-Locale-gettext","help2man","texinfo","m4","autoconf","socat","git","perl5"]}' > /tmp/pkg.json
+echo '{"pkgs":["nano","rsync","openssl","curl","sudo","php73-phar","py37-certbot","nginx","mariadb102-server","redis","php73-ctype","php73-dom","php73-gd","php73-iconv","php73-json","php73-mbstring","php73-posix","php73-simplexml","php73-xmlreader","php73-xmlwriter","php73-zip","php73-zlib","php73-pdo_mysql","php73-hash","php73-xml","php73-session","php73-mysqli","php73-wddx","php73-xsl","php73-filter","php73-curl","php73-fileinfo","php73-bz2","php73-intl","php73-openssl","php73-ldap","php73-ftp","php73-imap","php73-exif","php73-gmp","php73-memcache","php73-opcache","php73-pcntl","php73","mod_php73","php73-pecl-APCu","php73-pecl-imagick","bash","p5-Locale-gettext","help2man","texinfo","m4","autoconf","socat","git","perl5"]}' > /tmp/pkg.json
 iocage create --name "${JAIL_NAME}" -p /tmp/pkg.json -r ${RELEASE} ip4_addr="${INTERFACE}|${JAIL_IP}/24" defaultrouter="${DEFAULT_GW_IP}" boot="on" host_hostname="${JAIL_NAME}" vnet="${VNET}" allow_raw_sockets=1
 
 rm /tmp/pkg.json
@@ -188,8 +188,8 @@ iocage exec ${JAIL_NAME} chmod -R 770 /mnt/files
 #iocage exec ${JAIL_NAME} "if [ -z /usr/ports ]; then portsnap fetch extract; else portsnap auto; fi"
 iocage exec ${JAIL_NAME} chsh -s /usr/local/bin/bash root
 iocage exec ${JAIL_NAME} fetch -o /tmp https://download.nextcloud.com/server/releases/latest.tar.bz2
-#iocage exec ${JAIL_NAME} fetch -o /tmp https://download.nextcloud.com/server/releases/nextcloud-14.0.4.tar.bz2
-#iocage exec ${JAIL_NAME} tar xjf /tmp/nextcloud-14.0.4.tar.bz2 -C /usr/local/www/
+#iocage exec ${JAIL_NAME} fetch -o /tmp https://download.nextcloud.com/server/releases/nextcloud-18.0.2.tar.bz2
+#iocage exec ${JAIL_NAME} tar xjf /tmp/nextcloud-18.0.2.tar.bz2 -C /usr/local/www/
 iocage exec ${JAIL_NAME} tar xjf /tmp/latest.tar.bz2 -C /usr/local/www/
 iocage exec ${JAIL_NAME} rm /tmp/latest.tar.bz2
 iocage exec ${JAIL_NAME} chown -R www:www /usr/local/www/nextcloud/
