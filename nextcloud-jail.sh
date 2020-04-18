@@ -31,6 +31,7 @@ O_NAME=""
 OU_NAME=""
 EMAIL_NAME=""
 NO_SSL=""
+USE_BASEJAIL="-b"
 
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
@@ -39,8 +40,8 @@ CONFIGS_PATH=$SCRIPTPATH/configs
 DB_ROOT_PASSWORD=$(openssl rand -base64 16)
 DB_PASSWORD=$(openssl rand -base64 16)
 ADMIN_PASSWORD=$(openssl rand -base64 12)
-#RELEASE=$(freebsd-version | sed "s/STABLE/RELEASE/g")
-RELEASE="11.3-RELEASE"
+RELEASE=$(freebsd-version | sed "s/STABLE/RELEASE/g" | sed "s/-p[0-9]*//")
+
 # Check for nextcloud-config and set configuration
 if ! [ -e $SCRIPTPATH/nextcloud-config ]; then
   echo "$SCRIPTPATH/nextcloud-config must exist."
@@ -151,7 +152,7 @@ NO_SSL="no"
 fi 
 
 echo '{"pkgs":["nano","rsync","openssl","curl","sudo","php73-phar","py37-certbot","nginx","mariadb102-server","redis","php73-ctype","php73-dom","php73-gd","php73-iconv","php73-json","php73-mbstring","php73-posix","php73-simplexml","php73-xmlreader","php73-xmlwriter","php73-zip","php73-zlib","php73-pdo_mysql","php73-hash","php73-xml","php73-session","php73-mysqli","php73-wddx","php73-xsl","php73-filter","php73-curl","php73-fileinfo","php73-bz2","php73-intl","php73-openssl","php73-ldap","php73-ftp","php73-imap","php73-exif","php73-gmp","php73-memcache","php73-opcache","php73-pcntl","php73","mod_php73","php73-pecl-APCu","php73-pecl-imagick","bash","p5-Locale-gettext","help2man","texinfo","m4","autoconf","socat","git","perl5"]}' > /tmp/pkg.json
-iocage create --name "${JAIL_NAME}" -p /tmp/pkg.json -r ${RELEASE} ip4_addr="${INTERFACE}|${JAIL_IP}/24" defaultrouter="${DEFAULT_GW_IP}" boot="on" host_hostname="${JAIL_NAME}" vnet="${VNET}" allow_raw_sockets=1
+iocage create --name "${JAIL_NAME}" -p /tmp/pkg.json -r ${RELEASE} ip4_addr="${INTERFACE}|${JAIL_IP}/24" defaultrouter="${DEFAULT_GW_IP}" boot="on" host_hostname="${JAIL_NAME}" vnet="${VNET}" allow_raw_sockets=1 ${USE_BASEJAIL}
 
 rm /tmp/pkg.json
 
@@ -192,6 +193,7 @@ iocage exec ${JAIL_NAME} fetch -o /tmp https://download.nextcloud.com/server/rel
 #iocage exec ${JAIL_NAME} tar xjf /tmp/nextcloud-18.0.2.tar.bz2 -C /usr/local/www/
 iocage exec ${JAIL_NAME} tar xjf /tmp/latest.tar.bz2 -C /usr/local/www/
 iocage exec ${JAIL_NAME} rm /tmp/latest.tar.bz2
+#iocage exec ${JAIL_NAME} rm /tmp/nextcloud-18.0.2.tar.bz2
 iocage exec ${JAIL_NAME} chown -R www:www /usr/local/www/nextcloud/
 iocage exec ${JAIL_NAME} sysrc nginx_enable="YES"
 iocage exec ${JAIL_NAME} sysrc mysql_enable="YES"
@@ -331,7 +333,7 @@ iocage exec ${JAIL_NAME} cp -f /mnt/configs/email.sh /usr/email.sh
 echo "Backup and Restore scripts copied to /usr directory in the jail ${JAIL_NAME}"
 
 # Don't need /mnt/configs any more, so unmount it
-iocage fstab -r ${JAIL_NAME} ${CONFIGS_PATH} /mnt/configs nullfs rw 0 0
+#iocage fstab -r ${JAIL_NAME} ${CONFIGS_PATH} /mnt/configs nullfs rw 0 0
 
 # Done!
 echo "##########################################################################"

@@ -40,6 +40,7 @@ webserverServiceName="nginx" # The service name of the web server. Used to start
 nextcloudDatabase="nextcloud" # Your Nextcloud database name
 dbUser="nextcloud" # Your Nextcloud database user
 dbPassword="" # The password of the Nextcloud database user
+databaseSystem="mariadb" # mariadb or postgresql
 webserverUser="www" # Your web server user
 maxNrOfBackups=3 # The maximum number of backups to keep (when set to 0, all backups are kept)
 
@@ -83,9 +84,8 @@ if [ -z $nextcloudDataDir ]; then
   echo 'Configuration error: nextcloudDataDir must be set'
   exit 1
 fi
-if [ -z $webserverServiceName ]; then
-  echo 'Configuration error: webserverServiceName must be set'
-  exit 1
+if [ "$webserverServiceName" ]; then
+  echo 'No webserverServiceName set so will not stop webserver and will only do maintanance mode'
 fi
 
 if [ -z $nextcloudDatabase ]; then
@@ -169,70 +169,80 @@ fi
 # Set maintenance mode
 #
 echo "Set maintenance mode for Nextcloud..."
-#cd "${nextcloudFileDir}"
 su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:mode --on'
-#su -m "${webserverUser}" php /usr/local/www occ maintenance:mode --on
 echo "Done"
 echo
 
 #
 # Stop web server
 #
+if [ "$webserverServiceName" ]; then
 echo "Stopping web server..."
 service "${webserverServiceName}" stop
 echo "Done"
 echo
+fi
 
 #
 # Backup file and data directory
 #
 echo "Creating backup of Nextcloud file directory..."
 tar -cpzf "${backupdir}/${fileNameBackupFileDir}" -C "${nextcloudFileDir}" .
-#mkdir -p "${backupdir}nextcloud/"
-#rsync -avx "${nextcloudFileDir}/" "${backupdir}nextcloud/"
 echo "Done"
 echo
 
 echo "Creating backup of Nextcloud data directory..."
 tar -cpzf "${backupdir}/${fileNameBackupDataDir}"  -C "${nextcloudDataDir}" .
-#mkdir -p "${backupdir}/files/"
-#rsync -avx "${nextcloudDataDir}/" "${backupdir}files/"
 echo "Done"
 echo
 
 #
 # Backup DB
 #
-echo "Backing up Nextcloud Database..."
-mysqldump --single-transaction -h localhost -u "${dbUser}" -p"${dbPassword}" "${nextcloudDatabase}" > "${backupdir}/${fileNameBackupDb}"
-echo "Done"
-echo
+#echo "Backing up Nextcloud Database..."
+#mysqldump --single-transaction -h localhost -u "${dbUser}" -p"${dbPassword}" "${nextcloudDatabase}" > "${backupdir}/${fileNameBackupDb}"
+#echo "Done"
+#echo
+
+if [ "${databaseSystem}" = "mysql" ] || [ "${databaseSystem}" = "mariadb" ]; then
+  	echo "Backup Nextcloud database (MySQL/MariaDB)..."
+
+	mysqldump --single-transaction -h localhost -u "${dbUser}" -p"${dbPassword}" "${nextcloudDatabase}" > "${backupdir}/${fileNameBackupDb}"
+
+	echo "Done"
+	echo
+elif [ "${databaseSystem}" = "postgresql" ]; then
+	echo "Backup Nextcloud database (PostgreSQL)..."
+
+	PGPASSWORD="${dbPassword}" pg_dump "${nextcloudDatabase}" -h localhost -U "${dbUser}" -f "${backupdir}/${fileNameBackupDb}"
+
+	
+	echo "Done"
+	echo
+fi
+
 
 #
 # Start web server
 #
+if [ "$webserverServiceName" ]; then
 echo "Starting web server..."
 service "${webserverServiceName}" start
 echo "Done"
 echo
+fi
 
 #
 # Disable maintenance mode
 #
 echo "Switching off maintenance mode..."
 su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:mode --off'
-#su -m "${webserverUser}" php /usr/local/www occ maintenance:mode --off
 echo "Done"
 echo
 
 #
 # Delete old backups
 #
-#maxNrOfBackups=3
-#nrOfBackups=0
-#backupMainDir="/mnt/files/NextcloudBackups/"
-#echo "before if"
-#echo $maxNrOfBackups
 if [ ${maxNrOfBackups} -ne 0 ]
 then
      echo "maxNrOfBackups is not 0"
@@ -297,7 +307,6 @@ fi
 echo "Set maintenance mode for Nextcloud..."
 cd "${nextcloudFileDir}"
 su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:mode --on'
-#sudo -u "${webserverUser}" php occ maintenance:mode --on
 cd ~
 echo "Done"
 echo
@@ -305,10 +314,12 @@ echo
 #
 # Stop web server
 #
+if [ "$webserverServiceName" ]; then
 echo "Stopping web server..."
 service "${webserverServiceName}" stop
 echo "Done"
 echo
+fi
 
 #
 # Copy config.php to /mnt/NextcloudBackups
@@ -322,14 +333,14 @@ echo
 # Delete old Nextcloud direcories
 #
 echo "Deleting old Nextcloud file directory..."
-rm -r "${nextcloudFileDir}"
-mkdir -p "${nextcloudFileDir}"
+rm -rf "${nextcloudFileDir}"/*
+#mkdir -p "${nextcloudFileDir}"
 echo "Done"
 echo
 
 echo "Deleting old Nextcloud data directory..."
-rm -r "${nextcloudDataDir}"
-mkdir -p "${nextcloudDataDir}"
+rm -rf "${nextcloudDataDir}"/*
+#mkdir -p "${nextcloudDataDir}"
 echo "Done"
 echo
 
@@ -339,16 +350,12 @@ echo
 echo "Restoring Nextcloud file directory..."
 tar -xpzf "${currentRestoreDir}/${fileNameBackupFileDir}" -C "${nextcloudFileDir}"
 echo "tar -xpzf "${currentRestoreDir}/${fileNameBackupFileDir}" -C ${nextcloudFileDir}"
-#echo "rsync -Aax "${currentRestoreDir}/nextcloud/" ${nextcloudFileDir}"
-#rsync -Aax "${currentRestoreDir}/nextcloud/" ${nextcloudFileDir}
 echo "Done"
 echo
 
 echo "Restoring Nextcloud data directory..."
 tar -xpzf "${currentRestoreDir}/${fileNameBackupDataDir}" -C "${nextcloudDataDir}"
 echo "tar -xpzf "${currentRestoreDir}/${fileNameBackupDataDir}" -C ${nextcloudDataDir}"
-#echo "rsync -Aax "${currentRestoreDir}/files/" ${nextcloudDataDir}"
-#rsync -Aax ${currentRestoreDir}/files/ ${nextcloudDataDir}
 echo "Done"
 echo
 
@@ -356,27 +363,66 @@ echo
 # Restore database
 #
 echo "Dropping old Nextcloud DB..."
-mysql -h localhost -u "${dbUser}" -p"${dbPassword}" -e "DROP DATABASE ${nextcloudDatabase}"
+
+if [ "${databaseSystem}" = "mysql" ] || [ "${databaseSystem}" = "mariadb" ]; then
+    mysql -h localhost -u "${dbUser}" -p"${dbPassword}" -e "DROP DATABASE ${nextcloudDatabase}"
+elif [ "${databaseSystem}" = "postgresql" ]; then
+	sudo -u postgres psql -c "DROP DATABASE ${nextcloudDatabase};"
+fi
+
 echo "Done"
 echo
 
 echo "Creating new DB for Nextcloud..."
-mysql -h localhost -u "${dbUser}" -p"${dbPassword}" -e "CREATE DATABASE ${nextcloudDatabase}"
+
+if [ "${databaseSystem}" = "mysql" ] || [ "${databaseSystem}" = "mariadb" ]; then
+    # Use this if the databse from the backup uses UTF8 with multibyte support (e.g. for emoijs in filenames):
+    mysql -h localhost -u "${dbUser}" -p"${dbPassword}" -e "CREATE DATABASE ${nextcloudDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"
+    # TODO: Use this if the database from the backup DOES NOT use UTF8 with multibyte support (e.g. for emoijs in filenames):
+    #mysql -h localhost -u "${dbUser}" -p"${dbPassword}" -e "CREATE DATABASE ${nextcloudDatabase}"
+elif [ "${databaseSystem}" = "postgresql" ]; then
+    sudo -u postgres psql -c "CREATE DATABASE ${nextcloudDatabase} WITH OWNER ${dbUser} TEMPLATE template0 ENCODING \"UTF8\";"
+fi
+
 echo "Done"
 echo
 
 echo "Restoring backup DB..."
-mysql -h localhost -u "${dbUser}" -p"${dbPassword}" "${nextcloudDatabase}" < "${currentRestoreDir}/${fileNameBackupDb}"
+
+if [ "${databaseSystem}" = "mysql" ] || [ "${databaseSystem}" = "mariadb" ]; then
+	mysql -h localhost -u "${dbUser}" -p"${dbPassword}" "${nextcloudDatabase}" < "${currentRestoreDir}/${fileNameBackupDb}"
+elif [ "${databaseSystem}" = "postgresql" ]; then
+	sudo -u postgres psql "${nextcloudDatabase}" < "${currentRestoreDir}/${fileNameBackupDb}"
+fi
+
 echo "Done"
 echo
+
+
+#echo "Dropping old Nextcloud DB..."
+#mysql -h localhost -u "${dbUser}" -p"${dbPassword}" -e "DROP DATABASE ${nextcloudDatabase}"
+#echo "Done"
+#echo
+
+#echo "Creating new DB for Nextcloud..."
+#mysql -h localhost -u "${dbUser}" -p"${dbPassword}" -e "CREATE DATABASE ${nextcloudDatabase}"
+#echo "Done"
+#echo
+
+#echo "Restoring backup DB..."
+#mysql -h localhost -u "${dbUser}" -p"${dbPassword}" "${nextcloudDatabase}" < "${currentRestoreDir}/${fileNameBackupDb}"
+#echo "Done"
+#echo
 
 #
 # Start web server
 #
+if [ "$webserverServiceName" ]; then
 echo "Starting web server..."
 service "${webserverServiceName}" start
 echo "Done"
 echo
+fi
 
 #
 # Set directory permissions
@@ -388,17 +434,6 @@ echo "Done"
 echo
 
 #
-# Change the Database user and password back to the original not the backup
-# Doesn't work yet- to be used if backup you restore has a different database dbuser and dbpassword
-#
-#sed -i '' "s/'dbuser' => [^[:space:]]*/'dbuser' => '${dbUser}'/" /usr/local/www/nextcloud/config/config.php
-#sed -i '' "s/'dbpassword' => [^[:space:]]*/'dbpassword' => '${dbPassword}'/" /usr/local/www/nextcloud/config/config.php
-#su -m www -c 'php /usr/local/www/nextcloud/occ config:system:set dbuser --value="${dbUser}"'
-#su -m www -c 'php /usr/local/www/nextcloud/occ config:system:set dbpassword --value="${dbPassword}"'
-
-#echo "changed the Database user and password"
-
-#
 # Copy config.php back to original location
 #
 cp $backupMainDir/config.php "${nextcloudFileDir}/config/"
@@ -408,12 +443,11 @@ echo "done"
 echo
 
 #
-# Disbale maintenance mode
+# Disable maintenance mode
 #
 echo "Switching off maintenance mode..."
 cd "${nextcloudFileDir}"
 su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:mode --off'
-#sudo -u "${webserverUser}" php occ maintenance:mode --off
 echo "Done"
 echo
 
@@ -426,7 +460,6 @@ echo
 echo "Updating the system data-fingerprint..."
 cd "${nextcloudFileDir}"
 su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:data-fingerprint'
-#sudo -u "${webserverUser}" php occ maintenance:data-fingerprint
 echo "Done"
 echo
 
@@ -436,17 +469,6 @@ echo
 su -m www -c 'php /usr/local/www/nextcloud/occ twofactor:disable admin'
 su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:repair'
 
-
-#
-# Disbale maintenance mode
-#
-#echo "Switching off maintenance mode..."
-#cd "${nextcloudFileDir}"
-#su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:mode --off'
-#sudo -u "${webserverUser}" php occ maintenance:mode --off
-#echo "Done"
-echo
-
 #
 # Reset nextcloud admin password
 #
@@ -455,9 +477,6 @@ su -m www -c 'php /usr/local/www/nextcloud/occ user:resetpassword admin'
 echo "su -m www -c 'php /usr/local/www/nextcloud/occ user:resetpassword admin'"
 echo
 
-#echo "If you receive errors with the last 2 commands you have to edit the config.php dbuser and dbpassword and run the last 2 commands manually"
-#echo "su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:data-fingerprint'"
-#echo "su -m www -c 'php /usr/local/www/nextcloud/occ maintenance:mode --off'"
 echo
 echo "DONE!"
 echo "Backup ${restore} successfully restored."
